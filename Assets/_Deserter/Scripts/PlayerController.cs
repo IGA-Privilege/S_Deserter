@@ -100,7 +100,7 @@ public class PlayerController : MonoBehaviour
     private void Crawl()
     {
         palmAnimator.SetTrigger("Crawl");
-        float crawlForce = 11f;
+        float crawlForce = 9f;
         bodyVelocity = (palm.position - shoulderPoint.position) * crawlForce;
     }
 
@@ -167,28 +167,12 @@ public class PlayerController : MonoBehaviour
 
 
         // 移动手掌
-        float moveSpeed = 5f;
+        float moveSpeed = 4f;
         palm.position += moveVelocity * moveSpeed * Time.deltaTime;
 
 
         // 旋转手掌到小臂所在的角度
-        palm.right = (Vector2)Vector3.Lerp(palm.right, lowerArm.right, 0.01f);
-        /*
-        int sign = Vector3.Cross(palm.right, lowerArm.right).z < 0 ? -1 : 1;
-        float moveAngle = sign * Vector3.Angle(palm.right, lowerArm.right);
-        float zRotation = palm.eulerAngles.z + moveAngle;
-        if (zRotation > 130f && zRotation < 180f)
-        {
-            zRotation = palm.eulerAngles.z;
-        }
-        else if (zRotation >= 180f && zRotation < 230f)
-        {
-            zRotation = palm.eulerAngles.z;
-        }
-        palm.eulerAngles = new Vector3(0, 0, zRotation);
-        */
-        
-
+        palm.right = (Vector2)Vector3.Lerp(palm.right, lowerArm.right, 0.05f);
     }
 
 
