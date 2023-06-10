@@ -15,6 +15,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private Transform visualSpot1;
     [SerializeField] private Transform visualSpot2;
     [SerializeField] private LayerMask playerLayerMask;
+    [SerializeField] private LayerMask interactableLayerMask;
     [SerializeField] private Animator palmAnimator;
     [SerializeField] private GameObject dashArrowPref;
 
@@ -23,6 +24,9 @@ public class PlayerController : MonoBehaviour
     private bool isCharging;
     private float mouseButtonTicker;
     private GameObject instantiatedDashArrow;
+    [HideInInspector]
+    public bool isHiding;
+
 
     private void Awake()
     {
@@ -32,62 +36,71 @@ public class PlayerController : MonoBehaviour
 
     private void Update()
     {
-        float clickThreshold = 0.2f;
-        float maxChargeTime = 1.0f; // 实际最大蓄力时间 = maxChargeTime + clickThreshold
 
-        if (!isCharging)
+        if (Input.GetKeyDown(KeyCode.E))
         {
-            PalmFollowsCursor();
+            TryInteract();
         }
 
-        if (Input.GetMouseButton(0))
+        if (!isHiding)
         {
-            mouseButtonTicker += Time.deltaTime;
-        }
-        if (Input.GetMouseButtonUp(0))
-        {
+            float clickThreshold = 0.2f;
+            float maxChargeTime = 1.0f; // 实际最大蓄力时间 = maxChargeTime + clickThreshold
+
+            if (!isCharging)
+            {
+                PalmFollowsCursor();
+            }
+
+            if (Input.GetMouseButton(0))
+            {
+                mouseButtonTicker += Time.deltaTime;
+            }
+            if (Input.GetMouseButtonUp(0))
+            {
+                if (isCharging)
+                {
+                    Vector2 mouseDir = Camera.main.ScreenToWorldPoint(Input.mousePosition) - shoulderPoint.position;
+                    Dash((mouseButtonTicker - clickThreshold) / maxChargeTime, mouseDir.normalized);
+                    mouseButtonTicker = 0f;
+                    isCharging = false;
+                    palmAnimator.SetBool("isFisting", false);
+                    Destroy(instantiatedDashArrow);
+                }
+                else
+                {
+                    Crawl();
+                    mouseButtonTicker = 0f;
+                }
+            }
+
+            if (mouseButtonTicker > clickThreshold)
+            {
+                isCharging = true;
+            }
+
             if (isCharging)
             {
-                Vector2 mouseDir = Camera.main.ScreenToWorldPoint(Input.mousePosition) - shoulderPoint.position;
-                Dash((mouseButtonTicker - clickThreshold) / maxChargeTime, mouseDir.normalized);
-                mouseButtonTicker = 0f;
-                isCharging = false;
-                palmAnimator.SetBool("isFisting", false);
-                Destroy(instantiatedDashArrow);
-            }
-            else
-            {
-                Crawl();
-                mouseButtonTicker = 0f;
-            }
-        }
+                palmAnimator.SetBool("isFisting", true);
 
-        if (mouseButtonTicker > clickThreshold)
-        {
-            isCharging = true;
-        }
+                if (instantiatedDashArrow == null)
+                {
+                    instantiatedDashArrow = Instantiate(dashArrowPref);
+                    instantiatedDashArrow.transform.position = shoulderPoint.position;
 
-        if (isCharging)
-        {
-            palmAnimator.SetBool("isFisting", true);
+                    Vector3 mouseRelativePos = Camera.main.ScreenToWorldPoint(Input.mousePosition) - instantiatedDashArrow.transform.position;
+                    instantiatedDashArrow.transform.right = new Vector3(mouseRelativePos.x, mouseRelativePos.y, 0).normalized;
+                }
+                else
+                {
+                    Vector3 mouseRelativePos = Camera.main.ScreenToWorldPoint(Input.mousePosition) - instantiatedDashArrow.transform.position;
+                    instantiatedDashArrow.transform.right = new Vector3(mouseRelativePos.x, mouseRelativePos.y, 0).normalized;
 
-            if (instantiatedDashArrow == null)
-            {
-                instantiatedDashArrow = Instantiate(dashArrowPref);
-                instantiatedDashArrow.transform.position = shoulderPoint.position;
+                    instantiatedDashArrow.transform.position = shoulderPoint.position;
 
-                Vector3 mouseRelativePos = Camera.main.ScreenToWorldPoint(Input.mousePosition) - instantiatedDashArrow.transform.position;
-                instantiatedDashArrow.transform.right = new Vector3(mouseRelativePos.x, mouseRelativePos.y, 0).normalized;
-            }
-            else
-            {
-                Vector3 mouseRelativePos = Camera.main.ScreenToWorldPoint(Input.mousePosition) - instantiatedDashArrow.transform.position;
-                instantiatedDashArrow.transform.right = new Vector3(mouseRelativePos.x, mouseRelativePos.y, 0).normalized;
-
-                instantiatedDashArrow.transform.position = shoulderPoint.position;
-
-                float scaleSize = Mathf.Min(0.8f, 0.2f + (float)0.4 * (mouseButtonTicker - clickThreshold) / maxChargeTime);
-                instantiatedDashArrow.transform.localScale = new Vector3 (scaleSize, scaleSize, 1);
+                    float scaleSize = Mathf.Min(0.8f, 0.2f + (float)0.4 * (mouseButtonTicker - clickThreshold) / maxChargeTime);
+                    instantiatedDashArrow.transform.localScale = new Vector3(scaleSize, scaleSize, 1);
+                }
             }
         }
     }
@@ -120,7 +133,7 @@ public class PlayerController : MonoBehaviour
             mainBody_RB.velocity = bodyVelocity;
             float frictionForce = 0.6f;
             bodyVelocity = bodyVelocity - bodyVelocity.normalized * frictionForce;
-            if (bodyVelocity.magnitude < 0.25f)
+            if (bodyVelocity.magnitude < 0.35f)
             {
                 bodyVelocity = Vector3.zero;
             }
@@ -176,6 +189,37 @@ public class PlayerController : MonoBehaviour
     }
 
 
+    private void TryInteract()
+    {
+        if (isHiding)
+        {
+            Unhide();
+            return;
+        }
 
+        Collider2D interactable = Physics2D.OverlapCircle(shoulderPoint.position, 0.6f, interactableLayerMask);
+        if (interactable)
+        {
+            if (interactable.TryGetComponent<Door>(out Door door))
+            {
+                door.Open();
+            }
+            else if (interactable.TryGetComponent<Cabinet>(out Cabinet cabinet))
+            {
+                Hide(cabinet);
+            }
+        }
+    }
 
+    private void Hide(Cabinet cabinet)
+    {
+        isHiding = true;
+        transform.position += new Vector3(0, 0, 1f);
+    }
+
+    private void Unhide()
+    {
+        isHiding = false;
+        transform.position += new Vector3(0, 0, -1f);
+    }
 }

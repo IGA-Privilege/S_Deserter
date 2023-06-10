@@ -13,7 +13,7 @@ public class GameManager : MonoBehaviour
 
     private void Update()
     {
-        if (Vector3.Distance(Camera.main.transform.position, player.position) > 2.0f)
+        if (Vector3.Distance(Camera.main.transform.position, player.position) > 0.2f)
         {
             CameraFollowsPlayer();
         }
