@@ -39,6 +39,6 @@ public class Scorpion : MonoBehaviour
     private void FacePlayer(Transform player)
     {
         float turningSpeed = 0.05f;
-        transform.right = Vector3.Lerp(transform.right, (player.position - transform.position).normalized, turningSpeed);
+        transform.up = Vector3.Lerp(transform.up, (player.position - transform.position).normalized, turningSpeed);
     }
 }
