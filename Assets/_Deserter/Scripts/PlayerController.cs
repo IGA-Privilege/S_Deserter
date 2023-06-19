@@ -37,70 +37,67 @@ public class PlayerController : MonoBehaviour
     private void Update()
     {
 
-        if (Input.GetKeyDown(KeyCode.E))
+        if (Input.GetMouseButtonDown(1))
         {
             TryInteract();
         }
 
-        if (!isHiding)
+        float clickThreshold = 0.2f;
+        float maxChargeTime = 1.0f; // 实际最大蓄力时间 = maxChargeTime + clickThreshold
+
+        if (!isCharging)
         {
-            float clickThreshold = 0.2f;
-            float maxChargeTime = 1.0f; // 实际最大蓄力时间 = maxChargeTime + clickThreshold
+            PalmFollowsCursor();
+        }
 
-            if (!isCharging)
-            {
-                PalmFollowsCursor();
-            }
-
-            if (Input.GetMouseButton(0))
-            {
-                mouseButtonTicker += Time.deltaTime;
-            }
-            if (Input.GetMouseButtonUp(0))
-            {
-                if (isCharging)
-                {
-                    Vector2 mouseDir = Camera.main.ScreenToWorldPoint(Input.mousePosition) - shoulderPoint.position;
-                    Dash((mouseButtonTicker - clickThreshold) / maxChargeTime, mouseDir.normalized);
-                    mouseButtonTicker = 0f;
-                    isCharging = false;
-                    palmAnimator.SetBool("isFisting", false);
-                    Destroy(instantiatedDashArrow);
-                }
-                else
-                {
-                    Crawl();
-                    mouseButtonTicker = 0f;
-                }
-            }
-
-            if (mouseButtonTicker > clickThreshold)
-            {
-                isCharging = true;
-            }
-
+        if (Input.GetMouseButton(0))
+        {
+            mouseButtonTicker += Time.deltaTime;
+        }
+        if (Input.GetMouseButtonUp(0))
+        {
             if (isCharging)
             {
-                palmAnimator.SetBool("isFisting", true);
+                Vector2 mouseDir = Camera.main.ScreenToWorldPoint(Input.mousePosition) - shoulderPoint.position;
+                Dash((mouseButtonTicker - clickThreshold) / maxChargeTime, mouseDir.normalized);
+                mouseButtonTicker = 0f;
+                isCharging = false;
+                palmAnimator.SetBool("isFisting", false);
+                Destroy(instantiatedDashArrow);
+            }
+            else
+            {
+                Crawl();
+                mouseButtonTicker = 0f;
+            }
+        }
 
-                if (instantiatedDashArrow == null)
-                {
-                    instantiatedDashArrow = Instantiate(dashArrowPref);
-                    instantiatedDashArrow.transform.position = shoulderPoint.position;
+        if (mouseButtonTicker > clickThreshold)
+        {
+            isCharging = true;
+        }
 
-                    Vector3 mouseRelativePos = Camera.main.ScreenToWorldPoint(Input.mousePosition) - instantiatedDashArrow.transform.position;
-                    instantiatedDashArrow.transform.right = new Vector3(mouseRelativePos.x, mouseRelativePos.y, 0).normalized;
-                }
-                else
-                {
-                    Vector3 mouseRelativePos = Camera.main.ScreenToWorldPoint(Input.mousePosition) - instantiatedDashArrow.transform.position;
-                    instantiatedDashArrow.transform.right = new Vector3(mouseRelativePos.x, mouseRelativePos.y, 0).normalized;
+        if (isCharging)
+        {
+            palmAnimator.SetBool("isFisting", true);
 
-                    instantiatedDashArrow.transform.position = shoulderPoint.position;
+            if (instantiatedDashArrow == null)
+            {
+                instantiatedDashArrow = Instantiate(dashArrowPref);
+                instantiatedDashArrow.transform.position = shoulderPoint.position;
 
-                    float scaleSize = Mathf.Min(0.8f, 0.2f + (float)0.4 * (mouseButtonTicker - clickThreshold) / maxChargeTime);
-                    instantiatedDashArrow.transform.localScale = new Vector3(scaleSize, scaleSize, 1);
-                }
+                Vector3 mouseRelativePos = Camera.main.ScreenToWorldPoint(Input.mousePosition) - instantiatedDashArrow.transform.position;
+                instantiatedDashArrow.transform.right = new Vector3(mouseRelativePos.x, mouseRelativePos.y, 0).normalized;
+            }
+            else
+            {
+                Vector3 mouseRelativePos = Camera.main.ScreenToWorldPoint(Input.mousePosition) - instantiatedDashArrow.transform.position;
+                instantiatedDashArrow.transform.right = new Vector3(mouseRelativePos.x, mouseRelativePos.y, 0).normalized;
+
+                instantiatedDashArrow.transform.position = shoulderPoint.position;
+
+                float scaleSize = Mathf.Min(0.8f, 0.2f + (float)0.4 * (mouseButtonTicker - clickThreshold) / maxChargeTime);
+                instantiatedDashArrow.transform.localScale = new Vector3(scaleSize, scaleSize, 1);
             }
         }
     }
@@ -128,7 +125,7 @@ public class PlayerController : MonoBehaviour
     {
         if (bodyVelocity != Vector3.zero)
         {
-            mainBody_RB.transform.right = Vector3.Lerp(mainBody_RB.transform.right, -(bodyVelocity.normalized), 0.05f);
+            mainBody_RB.transform.right = -Vector3.Lerp(-mainBody_RB.transform.right, -(bodyVelocity.normalized), 0.05f);
 
             mainBody_RB.velocity = bodyVelocity;
             float frictionForce = 0.6f;
@@ -191,35 +188,14 @@ public class PlayerController : MonoBehaviour
 
     private void TryInteract()
     {
-        if (isHiding)
-        {
-            Unhide();
-            return;
-        }
-
-        Collider2D interactable = Physics2D.OverlapCircle(shoulderPoint.position, 0.6f, interactableLayerMask);
+        Collider2D interactable = Physics2D.OverlapCircle(shoulderPoint.position, 1f, interactableLayerMask);
         if (interactable)
         {
             if (interactable.TryGetComponent<Door>(out Door door))
             {
                 door.Open();
             }
-            else if (interactable.TryGetComponent<Cabinet>(out Cabinet cabinet))
-            {
-                Hide(cabinet);
-            }
         }
     }
 
-    private void Hide(Cabinet cabinet)
-    {
-        isHiding = true;
-        transform.position += new Vector3(0, 0, 1f);
-    }
-
-    private void Unhide()
-    {
-        isHiding = false;
-        transform.position += new Vector3(0, 0, -1f);
-    }
 }
