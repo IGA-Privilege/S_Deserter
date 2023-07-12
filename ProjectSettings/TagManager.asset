@@ -41,3 +41,24 @@ TagManager:
   - name: Default
     uniqueID: 0
     locked: 0
+  - name: Ground
+    uniqueID: 10847659
+    locked: 0
+  - name: Corridor
+    uniqueID: 2703761041
+    locked: 0
+  - name: Wall
+    uniqueID: 682828935
+    locked: 0
+  - name: Scene Element
+    uniqueID: 3558339755
+    locked: 0
+  - name: Texture
+    uniqueID: 2562516031
+    locked: 0
+  - name: Player
+    uniqueID: 2104302239
+    locked: 0
+  - name: Above Player
+    uniqueID: 2996740667
+    locked: 0

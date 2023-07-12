@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b640c53123a16ac49be137829f721e96, type: 3}
+  m_Name: Map 1
+  m_EditorClassIdentifier: 
+  is2DLevel: 1
+  colorPalette: {fileID: 2800000, guid: 3f74e883f29518642be6e7c0cb4d7f12, type: 3}
+  maps:
+  - map: {fileID: 2800000, guid: f4a8c875f2f627946b7a739b07645477, type: 3}
+    layerName: Wall
+  - map: {fileID: 2800000, guid: d05cea1090409db4485683dbb81beffa, type: 3}
+    layerName: Ground
+  - map: {fileID: 2800000, guid: dc06f3fc2d0fb494594533d1dd6724f3, type: 3}
+    layerName: Corridor
+  colorArray_2D:
+  - color: {r: 0, g: 0, b: 0, a: 1}
+    colorObjs:
+    - sprite: {fileID: 21300000, guid: 03f1cc548e795fc40ba640cf8091b4fa, type: 3}
+      proportion: 0
+  - color: {r: 0.8235294, g: 0.8235294, b: 0.8235294, a: 1}
+    colorObjs:
+    - sprite: {fileID: 21300000, guid: 72ee7c35fcc0df144abed7b2be9294a8, type: 3}
+      proportion: 0
+  - color: {r: 0.54901963, g: 0.4862745, b: 0.4862745, a: 1}
+    colorObjs:
+    - sprite: {fileID: 21300000, guid: 3baac7fc8a8ce24468bca6852f44a264, type: 3}
+      proportion: 0
+  colorArray_3D: []
