@@ -11,7 +11,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private Transform palm;
     [SerializeField] private Transform lowerArm;
     [SerializeField] private Transform shoulderPoint;
-    [SerializeField] private Rigidbody2D mainBody_RB;
+    public Rigidbody2D mainBody_RB;
     [SerializeField] private Transform visualSpot1;
     [SerializeField] private Transform visualSpot2;
     [SerializeField] private LayerMask playerLayerMask;
@@ -24,18 +24,22 @@ public class PlayerController : MonoBehaviour
     private bool isCharging;
     private float mouseButtonTicker;
     private GameObject instantiatedDashArrow;
+    private CanHideBehindObj[] canHideObjectsInScene;
     [HideInInspector]
     public bool isHiding;
+    public const float HIDE_DISTANCE = 1.3f;
 
 
     private void Awake()
     {
         cursorPos = palm.position;
+        FindAllHideBehindObjsInScene();
     }
 
 
     private void Update()
     {
+        TickHiding();
 
         if (Input.GetMouseButtonDown(1))
         {
@@ -98,6 +102,24 @@ public class PlayerController : MonoBehaviour
 
                 float scaleSize = Mathf.Min(0.8f, 0.2f + (float)0.4 * (mouseButtonTicker - clickThreshold) / maxChargeTime);
                 instantiatedDashArrow.transform.localScale = new Vector3(scaleSize, scaleSize, 1);
+            }
+        }
+    }
+
+    private void FindAllHideBehindObjsInScene()
+    {
+        canHideObjectsInScene = FindObjectsByType<CanHideBehindObj>(FindObjectsSortMode.None);
+    }
+
+    private void TickHiding()
+    {
+        isHiding = false;
+        for (int i = 0; i < canHideObjectsInScene.Length; i++)
+        {
+            float distance = Vector2.Distance(canHideObjectsInScene[i].transform.position, transform.position);
+            if (Vector2.Distance(canHideObjectsInScene[i].transform.position, shoulderPoint.position) < PlayerController.HIDE_DISTANCE)
+            {
+                isHiding = true; break;
             }
         }
     }
@@ -191,9 +213,13 @@ public class PlayerController : MonoBehaviour
         Collider2D interactable = Physics2D.OverlapCircle(shoulderPoint.position, 1f, interactableLayerMask);
         if (interactable)
         {
-            if (interactable.TryGetComponent<Door>(out Door door))
+            if (interactable.TryGetComponent<AutoDoor>(out AutoDoor door))
             {
-                door.Open();
+                door.OnInteract();
+            }
+            else if (interactable.TryGetComponent<DoorButton>(out DoorButton button))
+            {
+                button.OnInteract();
             }
         }
     }

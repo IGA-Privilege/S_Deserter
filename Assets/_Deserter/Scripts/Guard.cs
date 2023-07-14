@@ -12,10 +12,13 @@ public class Guard : MonoBehaviour
     private float patrolInterval = 5f;
     private Transform nextWaypoint;
     private GuardState state;
+    private bool _isWalking { get { return state == GuardState.Patrol; } }
+    private Animator _animator;
 
 
     private void Awake()
     {
+        _animator = GetComponent<Animator>();
         patrolInfos = new Dictionary<Transform, bool>();
         foreach (Transform waypoint in waypoints)
         {
@@ -26,6 +29,13 @@ public class Guard : MonoBehaviour
     private void Start()
     {
         state = GuardState.Static;
+        nextWaypoint = waypoints[0];
+    }
+
+    private void Update()
+    {
+
+        _animator.SetBool("isWalking", _isWalking);
     }
 
     private void FixedUpdate()
@@ -60,21 +70,22 @@ public class Guard : MonoBehaviour
 
         else if (state == GuardState.Patrol)
         {
-            if (Vector3.Distance(transform.position, nextWaypoint.position) < 0.2f)
+            if (Vector3.Distance(transform.position, nextWaypoint.position) < 0.05f)
             {
                 state = GuardState.Static;
                 patrolInfos[nextWaypoint] = true;
             }
             else
             {
-                float moveSpeed = 0.05f;
-                transform.position += (nextWaypoint.position - transform.position).normalized * moveSpeed;
-                float turningSpeed = 0.05f;
-                transform.up = Vector3.Lerp(transform.up, (nextWaypoint.position - transform.position).normalized, turningSpeed);
+                if (Vector3.Angle(transform.up, nextWaypoint.position - transform.position) < 10f)
+                {
+                    float moveSpeed = 0.01f;
+                    transform.position += (nextWaypoint.position - transform.position).normalized * moveSpeed;
+                }
+                float turningSpeed = 0.02f;
+                transform.up = Vector3.Lerp(transform.up, nextWaypoint.position - transform.position, turningSpeed);
             }
         }
-
-
     }
 
 

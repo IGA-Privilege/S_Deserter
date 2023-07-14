@@ -15,11 +15,15 @@ public class Scorpion : MonoBehaviour
 
     private void SearchForPlayer()
     {
-        Collider2D player = Physics2D.OverlapCircle(transform.position, 2.2f, playerLayerMask);
+        Collider2D player = Physics2D.OverlapCircle(transform.position, 3f, playerLayerMask);
         if (player != null)
         {
-            ChasePlayer(player.transform);
-            FacePlayer(player.transform);
+            PlayerController playerController = player.GetComponentInParent<PlayerController>();
+            if (!playerController.isHiding)
+            {
+                ChasePlayer(player.transform);
+                FacePlayer(player.transform);
+            }
         }
     }
 
@@ -31,7 +35,7 @@ public class Scorpion : MonoBehaviour
         }
         else
         {
-            float moveSpeed = 0.01f;
+            float moveSpeed = 0.02f;
             transform.position += (player.position - transform.position).normalized * moveSpeed;
         }
     }

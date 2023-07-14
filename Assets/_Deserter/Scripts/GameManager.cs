@@ -9,6 +9,7 @@ public class GameManager : MonoBehaviour
     private void Awake()
     {
         Camera.main.transform.position = new Vector3(player.position.x, player.position.y, -10f);
+        Cursor.visible = false;
     }
 
     private void Update()
