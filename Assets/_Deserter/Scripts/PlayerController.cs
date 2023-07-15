@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Assertions.Must;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
 using UnityEngine.UIElements;
 
 public class PlayerController : MonoBehaviour
@@ -19,6 +20,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private Animator palmAnimator;
     [SerializeField] private GameObject dashArrowPref;
 
+    private bool _canControlSelf = true;
     private Vector2 cursorPos;
     private Vector3 bodyVelocity;
     private bool isCharging;
@@ -49,61 +51,69 @@ public class PlayerController : MonoBehaviour
         float clickThreshold = 0.2f;
         float maxChargeTime = 1.0f; // 实际最大蓄力时间 = maxChargeTime + clickThreshold
 
-        if (!isCharging)
+        if (_canControlSelf)
         {
-            PalmFollowsCursor();
-        }
+            if (!isCharging)
+            {
+                PalmFollowsCursor();
+            }
 
-        if (Input.GetMouseButton(0))
-        {
-            mouseButtonTicker += Time.deltaTime;
-        }
-        if (Input.GetMouseButtonUp(0))
-        {
+            if (Input.GetMouseButton(0))
+            {
+                mouseButtonTicker += Time.deltaTime;
+            }
+            if (Input.GetMouseButtonUp(0))
+            {
+                if (isCharging)
+                {
+                    Vector2 mouseDir = Camera.main.ScreenToWorldPoint(Input.mousePosition) - shoulderPoint.position;
+                    Dash((mouseButtonTicker - clickThreshold) / maxChargeTime, mouseDir.normalized);
+                    mouseButtonTicker = 0f;
+                    isCharging = false;
+                    palmAnimator.SetBool("isFisting", false);
+                    Destroy(instantiatedDashArrow);
+                }
+                else
+                {
+                    Crawl();
+                    mouseButtonTicker = 0f;
+                }
+            }
+
+            if (mouseButtonTicker > clickThreshold)
+            {
+                isCharging = true;
+            }
+
             if (isCharging)
             {
-                Vector2 mouseDir = Camera.main.ScreenToWorldPoint(Input.mousePosition) - shoulderPoint.position;
-                Dash((mouseButtonTicker - clickThreshold) / maxChargeTime, mouseDir.normalized);
-                mouseButtonTicker = 0f;
-                isCharging = false;
-                palmAnimator.SetBool("isFisting", false);
-                Destroy(instantiatedDashArrow);
-            }
-            else
-            {
-                Crawl();
-                mouseButtonTicker = 0f;
-            }
-        }
+                palmAnimator.SetBool("isFisting", true);
 
-        if (mouseButtonTicker > clickThreshold)
-        {
-            isCharging = true;
-        }
+                if (instantiatedDashArrow == null)
+                {
+                    instantiatedDashArrow = Instantiate(dashArrowPref);
+                    instantiatedDashArrow.transform.position = shoulderPoint.position;
 
-        if (isCharging)
-        {
-            palmAnimator.SetBool("isFisting", true);
+                    Vector3 mouseRelativePos = Camera.main.ScreenToWorldPoint(Input.mousePosition) - instantiatedDashArrow.transform.position;
+                    instantiatedDashArrow.transform.right = new Vector3(mouseRelativePos.x, mouseRelativePos.y, 0).normalized;
+                }
+                else
+                {
+                    Vector3 mouseRelativePos = Camera.main.ScreenToWorldPoint(Input.mousePosition) - instantiatedDashArrow.transform.position;
+                    instantiatedDashArrow.transform.right = new Vector3(mouseRelativePos.x, mouseRelativePos.y, 0).normalized;
 
-            if (instantiatedDashArrow == null)
-            {
-                instantiatedDashArrow = Instantiate(dashArrowPref);
-                instantiatedDashArrow.transform.position = shoulderPoint.position;
+                    instantiatedDashArrow.transform.position = shoulderPoint.position;
 
-                Vector3 mouseRelativePos = Camera.main.ScreenToWorldPoint(Input.mousePosition) - instantiatedDashArrow.transform.position;
-                instantiatedDashArrow.transform.right = new Vector3(mouseRelativePos.x, mouseRelativePos.y, 0).normalized;
-            }
-            else
-            {
-                Vector3 mouseRelativePos = Camera.main.ScreenToWorldPoint(Input.mousePosition) - instantiatedDashArrow.transform.position;
-                instantiatedDashArrow.transform.right = new Vector3(mouseRelativePos.x, mouseRelativePos.y, 0).normalized;
-
-                instantiatedDashArrow.transform.position = shoulderPoint.position;
-
-                float scaleSize = Mathf.Min(0.8f, 0.2f + (float)0.4 * (mouseButtonTicker - clickThreshold) / maxChargeTime);
-                instantiatedDashArrow.transform.localScale = new Vector3(scaleSize, scaleSize, 1);
+                    float scaleSize = Mathf.Min(0.8f, 0.2f + (float)0.4 * (mouseButtonTicker - clickThreshold) / maxChargeTime);
+                    instantiatedDashArrow.transform.localScale = new Vector3(scaleSize, scaleSize, 1);
+                }
             }
         }
+    }
+
+    public void SetUnableToControl()
+    {
+        _canControlSelf = false;
     }
 
     private void FindAllHideBehindObjsInScene()
@@ -134,6 +144,41 @@ public class PlayerController : MonoBehaviour
         palmAnimator.SetTrigger("Crawl");
         float crawlForce = 9f;
         bodyVelocity = (palm.position - shoulderPoint.position) * crawlForce;
+    }
+
+    public IEnumerator SetConstantlyCrawling(Vector2 targetPosition)
+    {
+        float crawlingTimer = 0f;
+
+        while (!_canControlSelf)
+        {
+            Vector2 shoulderPos = shoulderPoint.position;
+            RaycastHit2D raycastHit1 = Physics2D.Raycast(shoulderPos, targetPosition - shoulderPos, 100f, playerLayerMask);
+            RaycastHit2D raycastHit2 = Physics2D.Raycast(targetPosition, shoulderPos - targetPosition, 100f, playerLayerMask);
+            if (raycastHit1.point == raycastHit2.point)
+            {
+                cursorPos = raycastHit1.point;
+            }
+            else
+            {
+                cursorPos = targetPosition;
+            }
+            Vector2 palmPos = palm.position;
+            Vector3 moveVelocity = new Vector3((cursorPos - palmPos).x, (cursorPos - palmPos).y, 0f);
+            float moveSpeed = 4f;
+            palm.position += moveVelocity * moveSpeed * Time.deltaTime;
+            palm.right = (Vector2)Vector3.Lerp(palm.right, lowerArm.right, 0.05f);
+
+            crawlingTimer += Time.deltaTime;
+            if (crawlingTimer > 0.8f)
+            {
+                Crawl();
+                crawlingTimer = 0f;
+            }
+
+            yield return new WaitForSeconds(0);
+        }
+        yield return null;
     }
 
     private void Dash(float chargePercentage, Vector2 direction)

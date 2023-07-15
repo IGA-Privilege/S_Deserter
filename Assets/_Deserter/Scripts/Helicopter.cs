@@ -53,6 +53,7 @@ public class Helicopter : MonoBehaviour
             SpriteRenderer droppedCorpse = Instantiate(droppedCorpsePref, transform.position + new Vector3(UnityEngine.Random.Range(-0.1f, 0.1f), UnityEngine.Random.Range(-0.05f, 0.05f), 0), Quaternion.identity).GetComponent<SpriteRenderer>();
             droppedCorpse.sprite = corpseSprite;
         }
+        GameManager.OnHelicopterDroppedCorpses.Invoke();
     }
 
     private void FlyToHoverPoint()
