@@ -14,6 +14,7 @@ public class Guard : MonoBehaviour
     private GuardState state;
     private bool _isWalking { get { return state == GuardState.Patrol; } }
     private Animator _animator;
+    private Transform _chaseTarget;
 
 
     private void Awake()
@@ -26,6 +27,12 @@ public class Guard : MonoBehaviour
         }
     }
 
+    public void SetChasingPlayer(PlayerController player)
+    {
+        state = GuardState.ChasePlayer;
+        _chaseTarget = player.mainBody_RB.transform;
+    }
+
     private void Start()
     {
         state = GuardState.Static;
@@ -34,7 +41,6 @@ public class Guard : MonoBehaviour
 
     private void Update()
     {
-
         _animator.SetBool("isWalking", _isWalking);
     }
 
@@ -84,6 +90,18 @@ public class Guard : MonoBehaviour
                 }
                 float turningSpeed = 0.02f;
                 transform.up = Vector3.Lerp(transform.up, nextWaypoint.position - transform.position, turningSpeed);
+            }
+        }
+
+        else if (state == GuardState.ChasePlayer)
+        {
+            float chaseSpeed = 0.08f;
+            transform.position += (_chaseTarget.position - transform.position).normalized * chaseSpeed;
+            float turningSpeed = 0.1f;
+            transform.up = Vector3.Lerp(transform.up, _chaseTarget.position - transform.position, turningSpeed);
+            if (Vector2.Distance(transform.position, _chaseTarget.position) < 0.6f)
+            {
+                GameManager.OnGameOver.Invoke();
             }
         }
     }

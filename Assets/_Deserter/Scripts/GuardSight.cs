@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class GuardSight : MonoBehaviour
 {
+    [SerializeField] private Guard guard;
+
     private void OnTriggerEnter2D(Collider2D collision)
     {
         PlayerController player = collision.GetComponentInParent<PlayerController>();
@@ -11,7 +13,7 @@ public class GuardSight : MonoBehaviour
         {
             if (!player.isHiding)
             {
-                Debug.Log("You are detected!");
+                guard.SetChasingPlayer(player);
             }
         }
     }

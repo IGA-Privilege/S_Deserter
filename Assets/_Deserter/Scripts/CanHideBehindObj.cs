@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class CanHideBehindObj : MonoBehaviour
 {
+    public float hideDistance = PlayerController.HIDE_DISTANCE;
     private SpriteRenderer _playerSprite;
     private SpriteRenderer _spriteRenderer;
     private float _spriteAlpha;
@@ -20,7 +21,7 @@ public class CanHideBehindObj : MonoBehaviour
     {
         if (_playerSprite.TryGetComponent<SpriteRenderer>(out SpriteRenderer sprite))
         {
-            bool isHiding = Vector2.Distance(sprite.bounds.center, transform.position) < PlayerController.HIDE_DISTANCE;
+            bool isHiding = Vector2.Distance(sprite.bounds.center, transform.position) < hideDistance;
             if (isHiding) 
             {
                 spriteAlpha -= 1f * Time.deltaTime;
@@ -28,6 +29,11 @@ public class CanHideBehindObj : MonoBehaviour
         }
         spriteAlpha += 0.5f * Time.deltaTime;
         _spriteRenderer.color = new Color(1, 1, 1, spriteAlpha);
+    }
+
+    private void OnDrawGizmosSelected()
+    {
+        Gizmos.DrawSphere(transform.position, hideDistance);
     }
 
 }

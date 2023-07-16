@@ -7,6 +7,7 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using UnityEngine.UIElements;
 
+[RequireComponent(typeof(AudioSource))]
 public class PlayerController : MonoBehaviour
 {
     [SerializeField] private Transform palm;
@@ -19,6 +20,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private LayerMask interactableLayerMask;
     [SerializeField] private Animator palmAnimator;
     [SerializeField] private GameObject dashArrowPref;
+    [SerializeField] private AudioClip crawlSound;
 
     private bool _canControlSelf = true;
     private Vector2 cursorPos;
@@ -27,6 +29,7 @@ public class PlayerController : MonoBehaviour
     private float mouseButtonTicker;
     private GameObject instantiatedDashArrow;
     private CanHideBehindObj[] canHideObjectsInScene;
+    private AudioSource _audioSource;
     [HideInInspector]
     public bool isHiding;
     public const float HIDE_DISTANCE = 1.3f;
@@ -34,6 +37,7 @@ public class PlayerController : MonoBehaviour
 
     private void Awake()
     {
+        _audioSource = GetComponent<AudioSource>();
         cursorPos = palm.position;
         FindAllHideBehindObjsInScene();
     }
@@ -141,6 +145,7 @@ public class PlayerController : MonoBehaviour
 
     private void Crawl()
     {
+        _audioSource.PlayOneShot(crawlSound);
         palmAnimator.SetTrigger("Crawl");
         float crawlForce = 9f;
         bodyVelocity = (palm.position - shoulderPoint.position) * crawlForce;

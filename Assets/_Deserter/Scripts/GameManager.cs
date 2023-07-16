@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
@@ -10,44 +11,60 @@ public class GameManager : MonoBehaviour
     [SerializeField] private PlayerController player;
     [SerializeField] private Image transitionImage;
     [SerializeField] private RectTransform titleUI;
+    [SerializeField] private RectTransform titleUIButtons;
     [SerializeField] private Image titleImage;
     [SerializeField] private Color bloody;
     [SerializeField] private Color black;
+    [SerializeField] private RectTransform gamePausedUI;
+    [SerializeField] private RectTransform gameOverUI;
     [SerializeField] private Transform level2SpawnPoint;
     [SerializeField] private Helicopter helicopter;
     [SerializeField] private Transform playerSuicidePoint;
     [SerializeField] private Collider2D colliderBlockingPlayerFromReturn;
+    [SerializeField] private AudioClip uiButtonSound;
+    public static Action OnGameOver;
     public static Action OnPlayerReachLevel2;
     public static Action OnPlayerTriggerGameEnding;
     public static Action OnHelicopterDroppedCorpses;
-    private GameState _gameState;
     private float _transitionColorAlpha;
     private float transitionColorAlpha { get { return _transitionColorAlpha; } set { _transitionColorAlpha = Mathf.Clamp(value, 0f, 1f); } }
+    private bool _shouldTimeAdvance { get { return !gameOverUI.gameObject.activeInHierarchy && !gamePausedUI.gameObject.activeInHierarchy; } }
 
 
     private void Awake()
     {
         Camera.main.transform.position = new Vector3(playerBody.position.x, playerBody.position.y, -10f);
-        _gameState = GameState.Title;
-        OnPlayerReachLevel2 += SendPlayerToLevel2;
-        OnPlayerTriggerGameEnding += CallHelicopter;
-        OnHelicopterDroppedCorpses += PlayerSuicide;
+        OnPlayerReachLevel2 = SendPlayerToLevel2;
+        OnPlayerTriggerGameEnding = CallHelicopter;
+        OnHelicopterDroppedCorpses = PlayerSuicide;
+        OnGameOver = SetPlayerGameOver;
     }
 
     private void Update()
     {
+        CheckTimeScale();
+
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            PauseGame();
+        }
+
         if (Vector3.Distance(Camera.main.transform.position, playerBody.position) > 0.2f)
         {
             CameraFollowsPlayer();
             AudioSourceFollowsCamera();
         }
+    }
 
-        if (_gameState == GameState.Title)
+    private void CheckTimeScale()
+    {
+        if (_shouldTimeAdvance)
         {
-            if (Input.GetMouseButtonDown(0) || Input.GetKeyDown(KeyCode.Return))
-            {
-                StartGame();
-            }
+            Time.timeScale = 1f;
+        }
+        else
+        {
+            Time.timeScale = 0f;
         }
     }
 
@@ -60,9 +77,15 @@ public class GameManager : MonoBehaviour
     {
         yield return StartCoroutine(TransitionFadeIn(3f, bloody));
 
+        Image[] buttonImages = titleUIButtons.GetComponentsInChildren<Image>();
+
         while (titleImage.color.a > 0f)
         {
             titleImage.color = new Color(Color.white.r, Color.white.g, Color.white.b, Mathf.Max(0f, titleImage.color.a - 0.05f));
+            for (int i = 0; i < buttonImages.Length; i++)
+            {
+                buttonImages[i].color = new Color(Color.white.r, Color.white.g, Color.white.b, Mathf.Max(0f, titleImage.color.a - 0.05f));
+            }
             yield return new WaitForSeconds(0.2f);
         }
 
@@ -102,11 +125,6 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    private void StartGame()
-    {
-        _gameState = GameState.Playing;
-        StartCoroutine(PlayGameStartAnimation());
-    }
 
     private void CameraFollowsPlayer()
     {
@@ -163,16 +181,62 @@ public class GameManager : MonoBehaviour
         player.enabled = false;
 
         yield return StartCoroutine(TransitionFadeIn(1f, bloody));
-        playerBody.GetComponent<Rigidbody2D>().gravityScale = 0.2f;
+        playerBody.GetComponent<Rigidbody2D>().gravityScale = 0.1f;
 
-        yield return new WaitForSeconds(0.8f);
+        yield return new WaitForSeconds(0.6f);
 
         playerBody.GetComponent<Rigidbody2D>().gravityScale = 0f;
         playerBody.GetComponent<Rigidbody2D>().velocity = Vector2.zero;
-    }
-}
 
-public enum GameState
-{
-    Title, Playing
+        while (transitionColorAlpha < 1f)
+        {
+            transitionColorAlpha += 0.04f;
+            transitionImage.color = new Color(bloody.r, bloody.g, bloody.b, Mathf.Min(1f, transitionColorAlpha));
+            yield return new WaitForSeconds(0.2f);
+        }
+
+        RestartGame();
+    }
+
+    public void StartGame()
+    {
+        AudioSource.PlayClipAtPoint(uiButtonSound, Camera.main.transform.position);
+        StartCoroutine(PlayGameStartAnimation());
+    }
+
+    public void SetPlayerGameOver()
+    {
+        gameOverUI.gameObject.SetActive(true);
+    }
+
+    public void PauseGame()
+    {
+        AudioSource.PlayClipAtPoint(uiButtonSound, Camera.main.transform.position);
+        gamePausedUI.gameObject.SetActive(true);
+    }
+
+    public void ResumeGame()
+    {
+        AudioSource.PlayClipAtPoint(uiButtonSound, Camera.main.transform.position);
+        gamePausedUI.gameObject.SetActive(false);
+        UnfreezeTime();
+    }
+
+    private void UnfreezeTime()
+    {
+        Time.timeScale = 1f;
+    }
+
+    public void RestartGame()
+    {
+        AudioSource.PlayClipAtPoint(uiButtonSound, Camera.main.transform.position);
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name, LoadSceneMode.Single);
+    }
+
+    public void ExitGame()
+    {
+        AudioSource.PlayClipAtPoint(uiButtonSound, Camera.main.transform.position);
+        Application.Quit();
+    }
+
 }

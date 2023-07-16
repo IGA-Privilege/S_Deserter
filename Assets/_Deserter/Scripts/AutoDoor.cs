@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+[RequireComponent(typeof(AudioSource))]
 public class AutoDoor : MonoBehaviour
 {
     [SerializeField] private Transform doorLeftPart;
@@ -10,14 +11,17 @@ public class AutoDoor : MonoBehaviour
     [SerializeField] private Transform leftPartOpenPoint;
     [SerializeField] private Transform rightPartOpenPoint;
     [SerializeField] private LayerMask playerLayerMask;
+    [SerializeField] private AudioClip sound;
     private Vector3 _leftPartClosePosition;
     private Vector3 _rightPartClosePosition;
+    private AudioSource _audioSource;
 
     private bool isOpen = false;
 
 
     private void Start()
     {
+        _audioSource = GetComponent<AudioSource>();
         _leftPartClosePosition = doorLeftPart.position;
         _rightPartClosePosition = doorRightPart.position;
     }
@@ -46,6 +50,8 @@ public class AutoDoor : MonoBehaviour
 
     private IEnumerator DoorOpen()
     {
+        _audioSource.PlayOneShot(sound);
+
         isOpen = true;
 
         float openSpeed = 1f;

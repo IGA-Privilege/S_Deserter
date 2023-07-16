@@ -2,14 +2,17 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+[RequireComponent(typeof(AudioSource))]
 public class GateDoor : MonoBehaviour
 {
     [SerializeField] private Transform doorLeftPart;
     [SerializeField] private Transform doorRightPart;
     [SerializeField] private Transform leftPartOpenPoint;
     [SerializeField] private Transform rightPartOpenPoint;
+    [SerializeField] private AudioClip sound;
     private Vector3 _leftPartClosePosition;
     private Vector3 _rightPartClosePosition;
+    private AudioSource _audioSource;
 
     private bool isOpen = false;
 
@@ -30,6 +33,8 @@ public class GateDoor : MonoBehaviour
 
     private IEnumerator DoorOpen()
     {
+        _audioSource.PlayOneShot(sound);
+
         isOpen = true;
 
         float openSpeed = 1f;
