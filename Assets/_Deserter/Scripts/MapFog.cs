@@ -4,25 +4,36 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(SpriteRenderer))]
-[RequireComponent(typeof(BoxCollider2D))]
 public class MapFog : MonoBehaviour
 {
     private SpriteRenderer _sprite;
     private float _spriteAlpha = 1f;
     private float spriteAlpha { get { return _spriteAlpha; } set { _spriteAlpha = Mathf.Clamp(value, 0f, 1f); } }
+    private SpriteRenderer _playerSprite;
+    private bool _hasDispelled;
+
 
     private void Awake()
     {
+        _hasDispelled = false;
         _sprite = GetComponent<SpriteRenderer>();
+        _playerSprite = FindObjectOfType<PlayerController>().GetComponent<SpriteRenderer>();
     }
 
-    private void OnTriggerEnter2D(Collider2D collision)
+    private void Update()
     {
-        PlayerController player = collision.GetComponentInParent<PlayerController>();
-        if (player != null)
+        float dispelDistance = 5f;
+        if (_playerSprite.TryGetComponent<SpriteRenderer>(out SpriteRenderer sprite))
         {
-            StartCoroutine(SetFogDispelled());
-        }
+            if (Vector2.Distance(sprite.bounds.center, transform.position) < dispelDistance)
+            {
+                if (!_hasDispelled)
+                {
+                    _hasDispelled = true;
+                    StartCoroutine(SetFogDispelled());
+                }
+            }
+        }    
     }
 
     private IEnumerator SetFogDispelled()

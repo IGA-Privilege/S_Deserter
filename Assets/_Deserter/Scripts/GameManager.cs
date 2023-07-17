@@ -60,10 +60,19 @@ public class GameManager : MonoBehaviour
     {
         if (_shouldTimeAdvance)
         {
+            if (!titleUI.gameObject.activeInHierarchy)
+            {
+                Cursor.visible = false;
+            }
+            else
+            {
+                Cursor.visible = true;
+            }
             Time.timeScale = 1f;
         }
         else
         {
+            Cursor.visible = true;
             Time.timeScale = 0f;
         }
     }

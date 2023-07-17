@@ -19,6 +19,7 @@ public class GateDoor : MonoBehaviour
 
     private void Start()
     {
+        _audioSource = GetComponent<AudioSource>();
         _leftPartClosePosition = doorLeftPart.position;
         _rightPartClosePosition = doorRightPart.position;
     }

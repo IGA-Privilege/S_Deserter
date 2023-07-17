@@ -16,6 +16,7 @@ public class DoorButton : MonoBehaviour
 
     public void OnInteract()
     {
+        _audioSource.PlayOneShot(buttonSound);
         linkedDoor.OnInteract();
     }
 }
