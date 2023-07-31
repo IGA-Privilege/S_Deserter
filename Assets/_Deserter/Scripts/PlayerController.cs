@@ -21,6 +21,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private Animator palmAnimator;
     [SerializeField] private GameObject dashArrowPref;
     [SerializeField] private AudioClip crawlSound;
+    [SerializeField] private UI_InteractButton interactButton;
 
     private bool _canControlSelf = true;
     private Vector2 cursorPos;
@@ -46,11 +47,7 @@ public class PlayerController : MonoBehaviour
     private void Update()
     {
         TickHiding();
-
-        if (Input.GetMouseButtonDown(1))
-        {
-            TryInteract();
-        }
+        DetectInteractObjs();
 
         float clickThreshold = 0.2f;
         float maxChargeTime = 1.0f; // 实际最大蓄力时间 = maxChargeTime + clickThreshold
@@ -258,7 +255,7 @@ public class PlayerController : MonoBehaviour
     }
 
 
-    private void TryInteract()
+    public void TryInteract()
     {
         Collider2D interactable = Physics2D.OverlapCircle(shoulderPoint.position, 1f, interactableLayerMask);
         if (interactable)
@@ -271,6 +268,22 @@ public class PlayerController : MonoBehaviour
             {
                 button.OnInteract();
             }
+        }
+    }
+
+    private void DetectInteractObjs()
+    {
+        Collider2D interactable = Physics2D.OverlapCircle(shoulderPoint.position, 1f, interactableLayerMask);
+        if (interactable)
+        {
+            if (interactable.TryGetComponent<DoorButton>(out DoorButton button))
+            {
+                interactButton.SetInteractable(true);
+            }
+        }
+        else
+        {
+            interactButton.SetInteractable(false);
         }
     }
 
