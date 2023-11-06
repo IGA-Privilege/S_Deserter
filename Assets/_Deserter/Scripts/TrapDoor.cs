@@ -5,6 +5,13 @@ using UnityEngine;
 
 public class TrapDoor : MonoBehaviour
 {
+    private void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Return))
+        {
+            GameManager.OnPlayerReachLevel2.Invoke();
+        }
+    }
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
